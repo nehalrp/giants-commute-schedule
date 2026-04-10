@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Giants Commute Check</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FD5A1E;
+      --black: #0D0D0D;
+      --card-bg: #1e1e1e;
+      --card-bg-2: #252525;
+      --muted: #888;
+      --red: #c0392b;
+      --yellow: #b7770d;
+      --green: #1a7a40;
+      --blue: #4285F4;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--black);
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      background: var(--orange);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #fff;
+    }
+
+    /* ── Alert banner ────────────────────────────────── */
+    #alert-banner {
+      padding: 22px 20px;
+      text-align: center;
+      transition: background 0.4s;
+    }
+
+    #alert-banner.state-loading  { background: #2a2a2a; }
+    #alert-banner.state-red      { background: var(--red); }
+    #alert-banner.state-yellow   { background: var(--yellow); }
+    #alert-banner.state-green    { background: var(--green); }
+    #alert-banner.state-error    { background: #3a2a0a; }
+
+    #alert-banner .alert-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    #alert-banner .alert-sub {
+      font-size: 0.9rem;
+      opacity: 0.88;
+      line-height: 1.5;
+    }
+
+    #alert-banner .alert-sub + .alert-sub {
+      margin-top: 3px;
+    }
+
+    /* ── Traffic button ──────────────────────────────── */
+    .traffic-section {
+      padding: 18px 16px 14px;
+    }
+
+    .traffic-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--blue);
+      color: #fff;
+      text-decoration: none;
+      padding: 18px 24px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(66,133,244,0.35);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .traffic-btn:active {
+      opacity: 0.82;
+      transform: scale(0.98);
+    }
+
+    .traffic-btn svg {
+      flex-shrink: 0;
+    }
+
+    /* ── Divider label ───────────────────────────────── */
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      padding: 6px 16px 10px;
+    }
+
+    /* ── Games list ──────────────────────────────────── */
+    .games-section {
+      padding: 0 12px 32px;
+    }
+
+    .game-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 14px 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-left: 3px solid transparent;
+    }
+
+    .game-card.highlight-red    { border-left-color: var(--red);    background: #2a1515; }
+    .game-card.highlight-orange { border-left-color: var(--orange); background: #221510; }
+
+    .game-date {
+      min-width: 58px;
+      text-align: center;
+    }
+
+    .game-date .g-dow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+
+    .game-date .g-day {
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #fff;
+    }
+
+    .game-date .g-mon {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .game-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .game-info .opponent {
+      font-size: 0.98rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .game-info .game-time {
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    .game-info .window-note {
+      font-size: 0.75rem;
+      color: #e07050;
+      margin-top: 3px;
+    }
+
+    .game-badge {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 5px 8px;
+      border-radius: 7px;
+    }
+
+    .badge-live     { background: var(--red);    color: #fff; animation: pulse 1.4s ease-in-out infinite; }
+    .badge-traffic  { background: #8B1A1A;       color: #ffaaaa; }
+    .badge-today    { background: #3a1a00;       color: var(--orange); }
+    .badge-soon     { background: #222;          color: #bbb; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.55; }
+    }
+
+    .no-games {
+      color: var(--muted);
+      text-align: center;
+      padding: 28px 0;
+      font-size: 0.9rem;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 0 16px 20px;
+      font-size: 0.72rem;
+      color: #444;
+      line-height: 1.7;
+    }
+
+    footer a {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚾ Giants Commute Check</h1>
+</header>
+
+<div id="alert-banner" class="state-loading">
+  <div class="alert-title">Checking schedule…</div>
+  <div class="alert-sub">Loading Giants home games</div>
+</div>
+
+<div class="traffic-section">
+  <a class="traffic-btn"
+     href="https://www.google.com/maps/dir/901+Cherry+Ave,+San+Bruno,+CA/333+Beale+St,+San+Francisco,+CA"
+     target="_blank"
+     rel="noopener noreferrer">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    Check Traffic Now
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+  </a>
+</div>
+
+<div class="section-label">Upcoming Home Games · Next 10 Days</div>
+
+<div class="games-section">
+  <div id="games-list">
+    <div class="no-games">Loading…</div>
+  </div>
+</div>
+
+<footer>
+  <span id="last-updated">—</span> · auto-refreshes every 5 min<br>
+  San Bruno (YouTube HQ) → 333 Beale St, SF
+</footer>
+
+<script>
+  const GIANTS_ID         = 137;
+  const BEFORE_HRS        = 3;    // traffic impact starts N hours before first pitch
+  const AFTER_HRS         = 2;    // traffic impact ends N hours after first pitch
+  const LOOKAHEAD_DAYS    = 10;
+  const REFRESH_MS        = 5 * 60 * 1000;
+
+  // ── Date helpers using LOCAL time (browser is Pacific for this user) ──────
+
+  function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function fmtTime(d) {
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
+  function fmtDow(d) {
+    return d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  }
+
+  function fmtMon(d) {
+    return d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  }
+
+  // ── Fetch Giants home games ───────────────────────────────────────────────
+
+  async function fetchHomeGames() {
+    const today = new Date();
+    const end   = new Date(today);
+    end.setDate(today.getDate() + LOOKAHEAD_DAYS);
+
+    const url = [
+      'https://statsapi.mlb.com/api/v1/schedule',
+      `?sportId=1&teamId=${GIANTS_ID}`,
+      `&startDate=${localDateStr(today)}&endDate=${localDateStr(end)}`,
+      '&gameType=R,P,F,D,L,W',    // regular season + all playoff rounds
+      '&hydrate=team'
+    ].join('');
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    const games = [];
+    for (const dateObj of (data.dates || [])) {
+      for (const game of (dateObj.games || [])) {
+        if (game.teams?.home?.team?.id === GIANTS_ID) {
+          games.push(game);
+        }
+      }
+    }
+    return games;
+  }
+
+  // ── Traffic window for a game ─────────────────────────────────────────────
+
+  function trafficWindow(gameDate) {
+    const pitch = new Date(gameDate);
+    return {
+      pitch,
+      start : new Date(pitch.getTime() - BEFORE_HRS * 3_600_000),
+      end   : new Date(pitch.getTime() + AFTER_HRS  * 3_600_000),
+    };
+  }
+
+  // ── Alert banner ──────────────────────────────────────────────────────────
+
+  function updateBanner(games) {
+    const now    = new Date();
+    const today  = localDateStr(now);
+    const banner = document.getElementById('alert-banner');
+
+    const todayGames = games.filter(g => {
+      // Compare using local date of the game time
+      return localDateStr(new Date(g.gameDate)) === today;
+    });
+
+    if (todayGames.length === 0) {
+      banner.className = 'state-green';
+      banner.innerHTML = `
+        <div class="alert-title">✅ No Game Impact Today</div>
+        <div class="alert-sub">No Giants home game today — commute should be normal</div>`;
+      return;
+    }
+
+    for (const game of todayGames) {
+      const { pitch, start, end } = trafficWindow(game.gameDate);
+      const isLive    = game.status?.abstractGameState === 'Live';
+      const inWindow  = now >= start && now <= end;
+      const opponent  = game.teams?.away?.team?.name ?? 'opponent';
+
+      if (inWindow || isLive) {
+        banner.className = 'state-red';
+        banner.innerHTML = `
+          <div class="alert-title">🔴 GAME ALERT — HEAVY TRAFFIC</div>
+          <div class="alert-sub">Home vs ${opponent}</div>
+          <div class="alert-sub">Traffic window: <strong>${fmtTime(start)} – ${fmtTime(end)}</strong></div>`;
+        return;
+      }
+
+      if (now < start) {
+        banner.className = 'state-yellow';
+        banner.innerHTML = `
+          <div class="alert-title">⚠️ Game Today — Plan Your Commute</div>
+          <div class="alert-sub">vs ${opponent} · First pitch <strong>${fmtTime(pitch)}</strong></div>
+          <div class="alert-sub">Traffic impact starts <strong>${fmtTime(start)}</strong></div>`;
+        return;
+      }
+
+      // Past the impact window
+      banner.className = 'state-green';
+      banner.innerHTML = `
+        <div class="alert-title">✅ Traffic Impact Has Passed</div>
+        <div class="alert-sub">Game vs ${opponent} is winding down — traffic should be clearing</div>`;
+      return;
+    }
+  }
+
+  // ── Games list ────────────────────────────────────────────────────────────
+
+  function renderGames(games) {
+    const list  = document.getElementById('games-list');
+    const now   = new Date();
+    const today = localDateStr(now);
+
+    if (games.length === 0) {
+      list.innerHTML = `<div class="no-games">No home games in the next ${LOOKAHEAD_DAYS} days</div>`;
+      return;
+    }
+
+    list.innerHTML = games.map(game => {
+      const { pitch, start, end } = trafficWindow(game.gameDate);
+      const isLive    = game.status?.abstractGameState === 'Live';
+      const isFinal   = game.status?.abstractGameState === 'Final';
+      const isToday   = localDateStr(pitch) === today;
+      const inWindow  = now >= start && now <= end;
+      const opponent  = game.teams?.away?.team?.name ?? 'Unknown';
+
+      // Card highlight
+      let cardClass = 'game-card';
+      if (inWindow || isLive)  cardClass += ' highlight-red';
+      else if (isToday)        cardClass += ' highlight-orange';
+
+      // Badge
+      let badge = '';
+      if (isLive)                       badge = `<span class="game-badge badge-live">Live</span>`;
+      else if (inWindow)                badge = `<span class="game-badge badge-traffic">Traffic</span>`;
+      else if (isToday && !isFinal)     badge = `<span class="game-badge badge-today">Today</span>`;
+      else if (!isFinal)                badge = `<span class="game-badge badge-soon">${fmtDow(pitch)}</span>`;
+
+      // Time line
+      let timeStr = isFinal ? 'Final' : fmtTime(pitch);
+
+      // Traffic window note for today's future games
+      let windowNote = '';
+      if (isToday && !isFinal && now < start) {
+        windowNote = `<div class="window-note">Traffic impact ${fmtTime(start)}–${fmtTime(end)}</div>`;
+      } else if (inWindow) {
+        windowNote = `<div class="window-note">Impact window ends ${fmtTime(end)}</div>`;
+      }
+
+      return `
+        <div class="${cardClass}">
+          <div class="game-date">
+            <div class="g-dow">${fmtDow(pitch)}</div>
+            <div class="g-day">${pitch.getDate()}</div>
+            <div class="g-mon">${fmtMon(pitch)}</div>
+          </div>
+          <div class="game-info">
+            <div class="opponent">vs ${opponent}</div>
+            <div class="game-time">${timeStr} · Oracle Park</div>
+            ${windowNote}
+          </div>
+          ${badge}
+        </div>`;
+    }).join('');
+  }
+
+  // ── Main update loop ──────────────────────────────────────────────────────
+
+  async function update() {
+    try {
+      const games = await fetchHomeGames();
+      updateBanner(games);
+      renderGames(games);
+      document.getElementById('last-updated').textContent =
+        `Updated ${fmtTime(new Date())}`;
+    } catch (err) {
+      console.error('Schedule fetch error:', err);
+      const banner = document.getElementById('alert-banner');
+      banner.className = 'state-error';
+      banner.innerHTML = `
+        <div class="alert-title">⚠️ Couldn't Load Schedule</div>
+        <div class="alert-sub">Check your connection — will retry in 5 min</div>`;
+    }
+  }
+
+  update();
+  setInterval(update, REFRESH_MS);
+</script>
+</body>
+</html>

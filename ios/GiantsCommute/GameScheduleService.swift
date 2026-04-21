@@ -16,6 +16,7 @@ final class GameScheduleService {
     var games: [Game] = []
     var trafficStatus: TrafficStatus = .loading
     var commuteDuration: String?
+    var route: MKRoute?
     var lastUpdated: Date?
 
     private var refreshTask: Task<Void, Never>?
@@ -38,8 +39,9 @@ final class GameScheduleService {
     }
 
     func fetch() async {
+        // Fetch games and commute info concurrently; MKRoute is non-Sendable so
+        // fetchCommuteInfo() is called after the async-let games result is awaited.
         async let gamesFetch: [Game] = fetchHomeGames()
-        async let durationFetch: String? = fetchCommuteDuration()
 
         do {
             let fetched = try await gamesFetch
@@ -50,19 +52,24 @@ final class GameScheduleService {
             trafficStatus = .error(error.localizedDescription)
         }
 
-        commuteDuration = await durationFetch
+        if let info = await fetchCommuteInfo() {
+            commuteDuration = info.duration
+            route = info.route
+        }
     }
 
-    private func fetchCommuteDuration() async -> String? {
+    private func fetchCommuteInfo() async -> (duration: String, route: MKRoute)? {
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: Self.origin))
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: Self.destination))
         request.transportType = .automobile
         request.departureDate = Date()
+        request.requestsAlternateRoutes = false
 
-        guard let eta = try? await MKDirections(request: request).calculateETA() else { return nil }
-        let minutes = Int(eta.expectedTravelTime / 60)
-        return "\(minutes) min with traffic"
+        guard let response = try? await MKDirections(request: request).calculate(),
+              let route = response.routes.first else { return nil }
+        let minutes = Int(route.expectedTravelTime / 60)
+        return ("\(minutes) min with traffic", route)
     }
 
     private func fetchHomeGames() async throws -> [Game] {

@@ -10,6 +10,7 @@ struct ContentView: View {
                     AlertBannerView(status: service.trafficStatus)
                     TrafficButtonView()
                     CommuteStripView(duration: service.commuteDuration)
+                    CommuteMapView(route: service.route)
                     SectionLabel(text: "Upcoming Home Games · Next 10 Days")
                     GameListView(games: service.games, trafficStatus: service.trafficStatus)
                     FooterView(lastUpdated: service.lastUpdated)
@@ -22,6 +23,16 @@ struct ContentView: View {
             .toolbarBackground(Color(hex: "FD5A1E"), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task { await service.fetch() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .tint(.white)
+                }
+            }
         }
         .task {
             service.startAutoRefresh()

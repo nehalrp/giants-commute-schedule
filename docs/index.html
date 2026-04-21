@@ -231,28 +231,26 @@
     /* ── Commute info strip ──────────────────────────── */
     .commute-strip {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 6px;
       padding: 0 16px 14px;
     }
 
     .commute-route {
       font-size: 0.78rem;
       color: var(--muted);
-      flex: 1;
-      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .commute-duration {
-      font-size: 0.88rem;
+      font-size: 2.5rem;
       font-weight: 700;
       color: #5cb85c;
       white-space: nowrap;
-      flex-shrink: 0;
+      text-align: center;
     }
 
     .commute-duration.loading {

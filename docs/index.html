@@ -227,6 +227,22 @@
     footer a {
       color: #555;
     }
+
+    /* ── Map section ─────────────────────────────────── */
+    .map-section {
+      padding: 0 16px 14px;
+    }
+
+    #map {
+      width: 100%;
+      height: 220px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    @media (min-width: 480px) {
+      #map { height: 280px; }
+    }
   </style>
 </head>
 <body>
@@ -254,6 +270,10 @@
       <path d="M5 12h14M12 5l7 7-7 7"/>
     </svg>
   </a>
+</div>
+
+<div class="map-section">
+  <div id="map"></div>
 </div>
 
 <div class="section-label">Upcoming Home Games · Next 10 Days</div>
@@ -471,6 +491,58 @@
 
   update();
   setInterval(update, REFRESH_MS);
+</script>
+
+<script>
+  function initMap() {
+    const darkStyles = [
+      { elementType: 'geometry',            stylers: [{ color: '#1a1a1a' }] },
+      { elementType: 'labels.text.stroke',  stylers: [{ color: '#0d0d0d' }] },
+      { elementType: 'labels.text.fill',    stylers: [{ color: '#888888' }] },
+      { featureType: 'road',                elementType: 'geometry',           stylers: [{ color: '#2c2c2c' }] },
+      { featureType: 'road',                elementType: 'geometry.stroke',    stylers: [{ color: '#111111' }] },
+      { featureType: 'road',                elementType: 'labels.text.fill',   stylers: [{ color: '#aaaaaa' }] },
+      { featureType: 'road.highway',        elementType: 'geometry',           stylers: [{ color: '#3a3a3a' }] },
+      { featureType: 'road.highway',        elementType: 'geometry.stroke',    stylers: [{ color: '#1a1a1a' }] },
+      { featureType: 'road.highway',        elementType: 'labels.text.fill',   stylers: [{ color: '#cccccc' }] },
+      { featureType: 'water',               elementType: 'geometry',           stylers: [{ color: '#0d1b2a' }] },
+      { featureType: 'water',               elementType: 'labels.text.fill',   stylers: [{ color: '#3d4f5c' }] },
+      { featureType: 'poi',                 elementType: 'geometry',           stylers: [{ color: '#1e1e1e' }] },
+      { featureType: 'poi',                 elementType: 'labels.text.fill',   stylers: [{ color: '#666666' }] },
+      { featureType: 'transit',             elementType: 'geometry',           stylers: [{ color: '#222222' }] },
+      { featureType: 'administrative',      elementType: 'geometry.stroke',    stylers: [{ color: '#333333' }] },
+      { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#555555' }] },
+    ];
+
+    const map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 11,
+      center: { lat: 37.666, lng: -122.355 },
+      styles: darkStyles,
+      disableDefaultUI: true,
+      gestureHandling: 'cooperative',
+    });
+
+    const directionsService  = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: false,
+      polylineOptions: { strokeColor: '#FD5A1E', strokeWeight: 5, strokeOpacity: 0.9 },
+    });
+
+    directionsService.route({
+      origin:      '901 Cherry Ave, San Bruno, CA',
+      destination: '333 Beale St, San Francisco, CA',
+      travelMode:  google.maps.TravelMode.DRIVING,
+    }, (result, status) => {
+      if (status === 'OK') {
+        directionsRenderer.setDirections(result);
+      }
+    });
+  }
+</script>
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDOQq_1gh8FoHk66BMXXuiF0myPFU-qrk&libraries=directions&callback=initMap"
+  async defer>
 </script>
 </body>
 </html>

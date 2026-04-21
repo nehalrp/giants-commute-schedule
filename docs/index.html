@@ -228,6 +228,39 @@
       color: #555;
     }
 
+    /* ── Commute info strip ──────────────────────────── */
+    .commute-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 16px 14px;
+    }
+
+    .commute-route {
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .commute-duration {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #5cb85c;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .commute-duration.loading {
+      color: var(--muted);
+      font-weight: 400;
+      font-style: italic;
+    }
+
     /* ── Map section ─────────────────────────────────── */
     .map-section {
       padding: 0 16px 14px;
@@ -270,6 +303,11 @@
       <path d="M5 12h14M12 5l7 7-7 7"/>
     </svg>
   </a>
+</div>
+
+<div class="commute-strip" id="commute-strip">
+  <span class="commute-route">🚗 901 Cherry Ave, San Bruno → 333 Beale St, SF</span>
+  <span class="commute-duration loading" id="commute-duration">fetching…</span>
 </div>
 
 <div class="map-section">
@@ -533,9 +571,20 @@
       origin:      '901 Cherry Ave, San Bruno, CA',
       destination: '333 Beale St, San Francisco, CA',
       travelMode:  google.maps.TravelMode.DRIVING,
+      drivingOptions: {
+        departureTime: new Date(),
+        trafficModel:  google.maps.TrafficModel.BEST_GUESS,
+      },
     }, (result, status) => {
+      const durEl = document.getElementById('commute-duration');
       if (status === 'OK') {
         directionsRenderer.setDirections(result);
+        const leg = result.routes[0].legs[0];
+        const dur = leg.duration_in_traffic ? leg.duration_in_traffic.text : leg.duration.text;
+        durEl.textContent = dur + ' with traffic';
+        durEl.classList.remove('loading');
+      } else {
+        document.getElementById('commute-strip').style.display = 'none';
       }
     });
   }
